@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Han的股票小窩</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .stock-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .stock-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stock-price {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .price-change {
+            font-size: 1.2em;
+            margin-top: 5px;
+        }
+
+        .price-change.positive {
+            color: #10b981;
+        }
+
+        .price-change.negative {
+            color: #ef4444;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .stock-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .watchlist-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .watchlist-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .watchlist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .watchlist-item-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .watchlist-item-price {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            padding: 6px 12px;
+            font-size: 0.9em;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .add-watchlist-btn {
+            width: 100%;
+            margin-top: 15px;
+            background: #10b981;
+        }
+
+        .add-watchlist-btn:hover {
+            background: #059669;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            .stock-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .no-data p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 Han的股票小窩</h1>
+            <p>您的個人股票分析平台</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="stockInput" 
+                    placeholder="輸入股票代碼 (例如: AAPL, TSLA, 2330)"
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button onclick="searchStock()">🔍 搜尋</button>
+            </div>
+            <div id="errorMessage"></div>
+        </div>
+
+        <div class="main-content">
+            <div class="stock-info">
+                <div id="stockContent" class="no-data">
+                    <p>👈 輸入股票代碼開始搜尋</p>
+                    <p style="font-size: 0.9em; color: #bbb;">例如: AAPL (蘋果), GOOGL (谷歌), 0050 (元大台灣50)</p>
+                </div>
+            </div>
+
+            <div class="watchlist-section">
+                <h2>📈 自選股清單</h2>
+                <div id="watchlistContent">
+                    <div class="empty-state">還沒有自選股</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStock = null;
+        let chartInstance = null;
+
+        // 初始化自選股
+        function initializeWatchlist() {
+            displayWatchlist();
+        }
+
+        // 搜尋股票
+        async function searchStock() {
+            const input = document.getElementById('stockInput').value.trim().toUpperCase();
+            const errorDiv = document.getElementById('errorMessage');
+            
+            if (!input) {
+                errorDiv.innerHTML = '<div class="error-message">請輸入股票代碼</div>';
+                return;
+            }
+
+            errorDiv.innerHTML = '';
+            const stockContent = document.getElementById('stockContent');
+            stockContent.innerHTML = '<div class="loading">正在載入數據...</div>';
+
+            try {
+                const data = await fetchStockData(input);
+                displayStockInfo(data);
+                currentStock = data;
+            } catch (error) {
+                errorDiv.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
+                stockContent.innerHTML = '<div class="no-data"><p>無法找到該股票</p></div>';
+                currentStock = null;
+            }
+        }
+
+        // 從 Yahoo Finance API 獲取數據
+        async function fetchStockData(symbol) {
+            try {
+                const response = await fetch(
+                    `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price,summaryDetail`
+                );
+                
+                if (!response.ok) throw new Error('股票代碼不存在');
+                
+                const data = await response.json();
+                const result = data.quoteSummary.result[0];
+                const priceData = result.price;
+                const summaryData = result.summaryDetail;
+
+                return {
+                    symbol: symbol,
+                    name: priceData.longName || symbol,
+                    currency: priceData.currency || 'USD',
+                    price: priceData.regularMarketPrice?.raw || 0,
+                    change: priceData.regularMarketChange?.raw || 0,
+                    changePercent: priceData.regularMarketChangePercent?.raw || 0,
+                    peRatio: summaryData.trailingPE?.raw || 'N/A',
+                    marketCap: summaryData.marketCap?.raw || 0,
+                    fiftyTwoWeekHigh: summaryData.fiftyTwoWeekHigh?.raw || 0,
+                    fiftyTwoWeekLow: summaryData.fiftyTwoWeekLow?.raw || 0,
+                    avgVolume: summaryData.averageVolume?.raw || 0
+                };
+            } catch (error) {
+                throw new Error('無法獲取股票數據，請檢查代碼是否正確');
+            }
+        }
+
+        // 顯示股票信息
+        function displayStockInfo(data) {
+            const priceChangeClass = data.change >= 0 ? 'positive' : 'negative';
+            const priceChangeSymbol = data.change >= 0 ? '📈 +' : '📉 ';
+            
+            const marketCapText = data.marketCap > 0 
+                ? `$${(data.marketCap / 1e9).toFixed(2)}B`
+                : 'N/A';
+            
+            const peRatioText = typeof data.peRatio === 'number' 
+                ? data.peRatio.toFixed(2)
+                : data.peRatio;
+
+            const html = `
+                <div class="stock-header">
+                    <div>
+                        <div class="stock-title">${data.name}</div>
+                        <div style="color: #999; font-size: 0.9em;">代碼: ${data.symbol}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="stock-price">${data.price.toFixed(2)} ${data.currency}</div>
+                        <div class="price-change ${priceChangeClass}">
+                            ${priceChangeSymbol}${Math.abs(data.change).toFixed(2)} (${data.changePercent.toFixed(2)}%)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <div class="stock-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">PE 比率</div>
+                        <div class="stat-value">${peRatioText}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">市值</div>
+                        <div class="stat-value">${marketCapText}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">52週高點</div>
+                        <div class="stat-value">$${data.fiftyTwoWeekHigh.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">52週低點</div>
+                        <div class="stat-value">$${data.fiftyTwoWeekLow.toFixed(2)}</div>
+                    </div>
+                </div>
+
+                <button class="add-watchlist-btn" onclick="addToWatchlist()">⭐ 加入自選股</button>
+            `;
+
+            document.getElementById('stockContent').innerHTML = html;
+            
+            // 繪製圖表
+            drawChart(data);
+        }
+
+        // 繪製圖表
+        function drawChart(data) {
+            // 模擬過去30天的數據（實際應用應該用真實API）
+            const days = 30;
+            const priceHistory = [];
+            const labels = [];
+            let price = data.price;
+
+            for (let i = days; i >= 0; i--) {
+                const change = (Math.random() - 0.5) * 2;
+                price = Math.max(price + change, data.fiftyTwoWeekLow * 0.9);
+                priceHistory.unshift(price.toFixed(2));
+                
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('zh-TW', {month: 'short', day: 'numeric'}));
+            }
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${data.symbol} 價格走勢`,
+                        data: priceHistory,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#667eea',
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: '價格'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加入自選股
+        function addToWatchlist() {
+            if (!currentStock) return;
+
+            const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            
+            // 檢查是否已存在
+            if (watchlist.some(item => item.symbol === currentStock.symbol)) {
+                alert('此股票已在自選股清單中');
+                return;
+            }
+
+            watchlist.push({
+                symbol: currentStock.symbol,
+                name: currentStock.name,
+                price: currentStock.price,
+                change: currentStock.change,
+                changePercent: currentStock.changePercent
+            });
+
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            displayWatchlist();
+            alert(`✅ 已將 ${currentStock.symbol} 加入自選股`);
+        }
+
+        // 顯示自選股清單
+        function displayWatchlist() {
+            const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            const container = document.getElementById('watchlistContent');
+
+            if (watchlist.length === 0) {
+                container.innerHTML = '<div class="empty-state">還沒有自選股</div>';
+                return;
+            }
+
+            let html = '';
+            watchlist.forEach((stock, index) => {
+                const priceChangeClass = stock.change >= 0 ? 'positive' : 'negative';
+                const priceChangeSymbol = stock.change >= 0 ? '📈' : '📉';
+
+                html += `
+                    <div class="watchlist-item">
+                        <div>
+                            <div class="watchlist-item-name">${stock.symbol}</div>
+                            <div style="font-size: 0.85em; color: #999;">${stock.name}</div>
+                        </div>
+                        <div style="text-align: right; flex: 1; margin: 0 10px;">
+                            <div class="watchlist-item-price">$${stock.price.toFixed(2)}</div>
+                            <div class="price-change ${priceChangeClass}" style="font-size: 0.85em;">
+                                ${priceChangeSymbol} ${stock.changePercent.toFixed(2)}%
+                            </div>
+                        </div>
+                        <button class="remove-btn" onclick="removeFromWatchlist(${index})">移除</button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 從自選股移除
+        function removeFromWatchlist(index) {
+            const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            const removed = watchlist.splice(index, 1)[0];
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            displayWatchlist();
+            alert(`已移除 ${removed.symbol}`);
+        }
+
+        // 回車鍵搜尋
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchStock();
+            }
+        }
+
+        // 初始化
+        window.addEventListener('load', initializeWatchlist);
+    </script>
+</body>
+</html>
