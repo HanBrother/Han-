@@ -343,14 +343,42 @@
             transform: scale(1.05);
         }
 
-        .api-info {
-            background: #fff3cd;
-            color: #856404;
+        .demo-info {
+            background: #e3f2fd;
+            color: #1565c0;
             padding: 15px;
             border-radius: 8px;
-            border-left: 4px solid #ffc107;
+            border-left: 4px solid #1976d2;
             margin-bottom: 20px;
             font-size: 0.95em;
+        }
+
+        .demo-info strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .demo-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .demo-button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .demo-button:hover {
+            background: #1565c0;
+            transform: scale(1.05);
         }
 
         @media (max-width: 768px) {
@@ -390,8 +418,15 @@
         </div>
 
         <div class="search-section">
-            <div class="api-info">
-                💡 提示：搜尋美股代碼（AAPL, GOOGL, TSLA）效果最佳。台灣股票需要特殊API支持。
+            <div class="demo-info">
+                <strong>📊 演示模式 - 點擊快速試用：</strong>
+                <div class="demo-list">
+                    <button class="demo-button" onclick="searchStockDemo('AAPL')">🍎 AAPL</button>
+                    <button class="demo-button" onclick="searchStockDemo('2330')">🏭 2330 (台積電)</button>
+                    <button class="demo-button" onclick="searchStockDemo('TSLA')">⚡ TSLA</button>
+                    <button class="demo-button" onclick="searchStockDemo('0050')">🇹🇼 0050 (台灣50)</button>
+                    <button class="demo-button" onclick="searchStockDemo('GOOGL')">🔍 GOOGL</button>
+                </div>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -401,7 +436,7 @@
                 <input 
                     type="text" 
                     id="stockInput" 
-                    placeholder="輸入股票代碼 (如: AAPL, GOOGL, TSLA, IBM)"
+                    placeholder="輸入股票代碼 (如: AAPL, 2330, TSLA, 0050)"
                     onkeypress="if(event.key === 'Enter') searchStock()"
                 >
                 <button onclick="searchStock()">🔍 搜尋</button>
@@ -464,9 +499,75 @@
     </div>
 
     <script>
-        // API KEY (免費額度：5 calls/minute, 500 calls/day)
-        const API_KEY = 'demo'; // 用 demo key 測試
-        const API_BASE = 'https://www.alphavantage.co/query';
+        // 股票數據庫 (模擬數據)
+        const stockDatabase = {
+            'AAPL': {
+                name: 'Apple Inc.',
+                currentPrice: 182.45,
+                changePercent: 2.35,
+                change: 4.20,
+                openPrice: 178.25,
+                highPrice: 184.50,
+                lowPrice: 177.80,
+                volume: 52348900,
+                currency: 'USD'
+            },
+            '2330': {
+                name: '台積電 (TSMC)',
+                currentPrice: 598.00,
+                changePercent: 1.68,
+                change: 9.90,
+                openPrice: 588.10,
+                highPrice: 602.50,
+                lowPrice: 586.00,
+                volume: 15234500,
+                currency: 'TWD'
+            },
+            'TSLA': {
+                name: 'Tesla Inc.',
+                currentPrice: 242.84,
+                changePercent: -1.45,
+                change: -3.58,
+                openPrice: 246.42,
+                highPrice: 248.20,
+                lowPrice: 240.50,
+                volume: 125648900,
+                currency: 'USD'
+            },
+            '0050': {
+                name: '元大台灣50 (0050)',
+                currentPrice: 135.80,
+                changePercent: 0.85,
+                change: 1.15,
+                openPrice: 134.65,
+                highPrice: 136.45,
+                lowPrice: 134.20,
+                volume: 8945600,
+                currency: 'TWD'
+            },
+            'GOOGL': {
+                name: 'Alphabet Inc.',
+                currentPrice: 168.52,
+                changePercent: 3.12,
+                change: 5.08,
+                openPrice: 163.44,
+                highPrice: 170.25,
+                lowPrice: 162.95,
+                volume: 28934500,
+                currency: 'USD'
+            },
+            'MSFT': {
+                name: 'Microsoft Corporation',
+                currentPrice: 428.95,
+                changePercent: 1.78,
+                change: 7.56,
+                openPrice: 421.39,
+                highPrice: 432.10,
+                lowPrice: 420.50,
+                volume: 18234900,
+                currency: 'USD'
+            }
+        };
 
         let currentStock = null;
         let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
@@ -477,8 +578,14 @@
             renderWatchlist();
         });
 
+        // 快速搜尋
+        function searchStockDemo(symbol) {
+            document.getElementById('stockInput').value = symbol;
+            searchStock();
+        }
+
         // 搜尋股票
-        async function searchStock() {
+        function searchStock() {
             const input = document.getElementById('stockInput').value.trim().toUpperCase();
             
             if (!input) {
@@ -489,11 +596,12 @@
             showLoading(true);
             clearError();
 
-            try {
-                const data = await fetchStockData(input);
+            // 模擬延遲
+            setTimeout(() => {
+                const data = stockDatabase[input];
                 
                 if (!data) {
-                    showError('無法獲取股票數據，請檢查代碼是否正確或稍後重試');
+                    showError('無法找到該股票，請確認代碼是否正確');
                     showLoading(false);
                     return;
                 }
@@ -507,49 +615,7 @@
                 updateWatchlistButton();
                 showLoading(false);
                 showSuccess(`成功載入 ${input} 的股票數據`);
-            } catch (error) {
-                console.error('Error:', error);
-                showError('獲取數據時出錯，請稍後重試');
-                showLoading(false);
-            }
-        }
-
-        // 獲取股票數據
-        async function fetchStockData(symbol) {
-            try {
-                // 使用 Alpha Vantage API
-                const url = `${API_BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`;
-                
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (!data['Global Quote'] || !data['Global Quote']['01. symbol']) {
-                    return null;
-                }
-
-                const quote = data['Global Quote'];
-                
-                // 獲取歷史數據用於圖表
-                const timeSeriesUrl = `${API_BASE}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}`;
-                const timeSeriesResponse = await fetch(timeSeriesUrl);
-                const timeSeriesData = await timeSeriesResponse.json();
-
-                return {
-                    name: symbol,
-                    currentPrice: parseFloat(quote['05. price']) || 0,
-                    currency: 'USD',
-                    changePercent: parseFloat(quote['10. change percent']?.replace('%', '')) || 0,
-                    change: parseFloat(quote['09. change']) || 0,
-                    openPrice: parseFloat(quote['02. open']) || 0,
-                    highPrice: parseFloat(quote['03. high']) || 0,
-                    lowPrice: parseFloat(quote['04. low']) || 0,
-                    volume: quote['06. volume'] || 0,
-                    timeSeries: timeSeriesData['Time Series (Daily)'] || {}
-                };
-            } catch (error) {
-                console.error('Error fetching stock data:', error);
-                return null;
-            }
+            }, 800);
         }
 
         // 顯示股票詳情
@@ -584,10 +650,21 @@
         function drawChart(stock) {
             const ctx = document.getElementById('priceChart').getContext('2d');
             
-            // 從歷史數據生成圖表
-            const dates = Object.keys(stock.timeSeries).slice(0, 30).reverse();
-            const labels = dates.map(date => new Date(date).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }));
-            const prices = dates.map(date => parseFloat(stock.timeSeries[date]['4. close']));
+            // 生成 30 天的模擬數據
+            const dates = [];
+            const prices = [];
+            let basePrice = stock.currentPrice;
+            
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }));
+                
+                // 隨機波動
+                const volatility = (Math.random() - 0.5) * 5;
+                basePrice += volatility;
+                prices.push(parseFloat(basePrice.toFixed(2)));
+            }
 
             if (chart) {
                 chart.destroy();
@@ -598,9 +675,9 @@
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: dates,
                     datasets: [{
-                        label: `${stock.symbol} 價格趨勢`,
+                        label: `${stock.symbol} 30日價格趨勢`,
                         data: prices,
                         borderColor: isPositive ? '#4caf50' : '#f44336',
                         backgroundColor: isPositive 
@@ -638,7 +715,7 @@
                             ticks: {
                                 color: '#666',
                                 callback: function(value) {
-                                    return '$' + value.toFixed(2);
+                                    return '$' + value.toFixed(0);
                                 }
                             }
                         },
