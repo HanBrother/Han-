@@ -4,833 +4,403 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Han的股票小窩</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-
+        
         .container {
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
         }
-
+        
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 40px;
-            padding: 30px 0;
+            margin-bottom: 30px;
         }
-
+        
         .header h1 {
-            font-size: 3em;
+            font-size: 2.5em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .search-section {
+        
+        .search-box {
             background: white;
-            border-radius: 15px;
             padding: 30px;
-            margin-bottom: 30px;
+            border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
         }
-
-        .search-container {
+        
+        .input-group {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
-
-        .search-container input {
+        
+        input {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 1em;
             transition: border-color 0.3s;
         }
-
-        .search-container input:focus {
+        
+        input:focus {
             outline: none;
             border-color: #667eea;
         }
-
-        .search-container button {
-            padding: 15px 30px;
+        
+        button {
+            padding: 12px 20px;
             background: #667eea;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1em;
             cursor: pointer;
-            transition: all 0.3s;
             font-weight: bold;
+            transition: background 0.3s;
         }
-
-        .search-container button:hover {
+        
+        button:hover {
             background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #c62828;
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #2e7d32;
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #667eea;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .content {
+        
+        .quick-buttons {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
-        .stock-detail {
+        
+        .quick-btn {
+            padding: 10px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .result {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
             display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-
-        .stock-detail.show {
+        
+        .result.show {
             display: block;
         }
-
+        
         .stock-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
         }
-
-        .stock-title h2 {
-            font-size: 2em;
+        
+        .stock-symbol {
+            font-size: 1.5em;
+            font-weight: bold;
             color: #333;
-            margin-bottom: 5px;
         }
-
-        .stock-title p {
-            color: #999;
-            font-size: 0.9em;
-        }
-
+        
         .stock-price {
-            text-align: right;
-        }
-
-        .price {
-            font-size: 2.5em;
+            font-size: 2em;
             font-weight: bold;
-            color: #333;
+            color: #667eea;
         }
-
-        .change {
-            font-size: 1.2em;
-            margin-top: 5px;
+        
+        .stock-change {
+            font-size: 1.1em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
         }
-
-        .change.positive {
-            color: #4caf50;
+        
+        .change-up {
+            color: #22c55e;
+            background: #f0fdf4;
         }
-
-        .change.negative {
-            color: #f44336;
+        
+        .change-down {
+            color: #ef4444;
+            background: #fef2f2;
         }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 30px;
-        }
-
-        .stats-grid {
+        
+        .stock-details {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-top: 15px;
         }
-
-        .stat-box {
-            background: #f9f9f9;
-            padding: 15px;
+        
+        .detail-item {
+            background: #f8f9fa;
+            padding: 12px;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
         }
-
-        .stat-label {
-            color: #999;
+        
+        .detail-label {
+            color: #666;
             font-size: 0.9em;
             margin-bottom: 5px;
         }
-
-        .stat-value {
-            font-size: 1.3em;
+        
+        .detail-value {
+            font-size: 1.2em;
             font-weight: bold;
             color: #333;
         }
-
-        .add-to-watchlist {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .add-to-watchlist:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .add-to-watchlist.added {
-            background: #4caf50;
-        }
-
+        
         .watchlist {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-
-        .watchlist h3 {
-            font-size: 1.5em;
+        
+        .watchlist h2 {
+            margin-bottom: 15px;
             color: #333;
-            margin-bottom: 20px;
         }
-
-        .watchlist-empty {
-            text-align: center;
-            color: #999;
-            padding: 40px 20px;
-        }
-
+        
         .watchlist-item {
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid #667eea;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
-
-        .watchlist-item:hover {
-            background: #f0f0f0;
-            transform: translateX(5px);
-        }
-
-        .watchlist-item-info {
-            flex: 1;
-        }
-
+        
         .watchlist-item-symbol {
             font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .watchlist-item-price {
             color: #667eea;
-            font-size: 1.1em;
+        }
+        
+        .watchlist-item-price {
             font-weight: bold;
         }
-
-        .watchlist-item-change {
-            text-align: right;
-            font-size: 1em;
-            min-width: 80px;
-        }
-
-        .watchlist-item-change.positive {
-            color: #4caf50;
-        }
-
-        .watchlist-item-change.negative {
-            color: #f44336;
-        }
-
+        
         .remove-btn {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s;
-            margin-left: 10px;
+            background: #ef4444;
+            padding: 5px 10px;
+            font-size: 0.8em;
         }
-
+        
         .remove-btn:hover {
-            background: #d32f2f;
-            transform: scale(1.05);
+            background: #dc2626;
         }
-
-        .demo-info {
-            background: #e3f2fd;
-            color: #1565c0;
+        
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        
+        .error {
+            background: #fef2f2;
+            color: #ef4444;
             padding: 15px;
             border-radius: 8px;
-            border-left: 4px solid #1976d2;
-            margin-bottom: 20px;
-            font-size: 0.95em;
-        }
-
-        .demo-info strong {
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .demo-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .demo-button {
-            background: #1976d2;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s;
-        }
-
-        .demo-button:hover {
-            background: #1565c0;
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .search-container {
-                flex-direction: column;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stock-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .stock-price {
-                text-align: left;
-                margin-top: 15px;
-            }
+            border-left: 4px solid #ef4444;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏠 Han的股票小窩</h1>
-            <p>您的個人股票分析平台</p>
+            <h1>📈 Han的股票小窩</h1>
+            <p>實時股票價格查詢</p>
         </div>
-
-        <div class="search-section">
-            <div class="demo-info">
-                <strong>📊 演示模式 - 點擊快速試用：</strong>
-                <div class="demo-list">
-                    <button class="demo-button" onclick="searchStockDemo('AAPL')">🍎 AAPL</button>
-                    <button class="demo-button" onclick="searchStockDemo('2330')">🏭 2330 (台積電)</button>
-                    <button class="demo-button" onclick="searchStockDemo('TSLA')">⚡ TSLA</button>
-                    <button class="demo-button" onclick="searchStockDemo('0050')">🇹🇼 0050 (台灣50)</button>
-                    <button class="demo-button" onclick="searchStockDemo('GOOGL')">🔍 GOOGL</button>
-                </div>
-            </div>
-
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-            
-            <div class="search-container">
+        
+        <div class="search-box">
+            <div class="input-group">
                 <input 
                     type="text" 
-                    id="stockInput" 
-                    placeholder="輸入股票代碼 (如: AAPL, 2330, TSLA, 0050)"
-                    onkeypress="if(event.key === 'Enter') searchStock()"
+                    id="symbolInput" 
+                    placeholder="輸入股票代碼(如: AAPL, 2330, TSLA, 0050)"
+                    autocomplete="off"
                 >
-                <button onclick="searchStock()">🔍 搜尋</button>
+                <button onclick="searchStock()">搜尋</button>
             </div>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>正在獲取股票數據...</p>
+            
+            <div class="quick-buttons">
+                <button class="quick-btn" onclick="quickSearch('AAPL')">AAPL</button>
+                <button class="quick-btn" onclick="quickSearch('2330')">2330</button>
+                <button class="quick-btn" onclick="quickSearch('TSLA')">TSLA</button>
+                <button class="quick-btn" onclick="quickSearch('0050')">0050</button>
             </div>
         </div>
-
-        <div class="content">
-            <div class="stock-detail" id="stockDetail">
-                <div class="stock-header">
-                    <div class="stock-title">
-                        <h2 id="stockSymbol">-</h2>
-                        <p id="stockName">-</p>
-                    </div>
-                    <div class="stock-price">
-                        <div class="price" id="stockPrice">-</div>
-                        <div class="change" id="stockChange">-</div>
-                    </div>
+        
+        <div id="result" class="result">
+            <div class="stock-header">
+                <div>
+                    <div class="stock-symbol" id="resultSymbol"></div>
                 </div>
-
-                <div class="chart-container">
-                    <canvas id="priceChart"></canvas>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-label">開盤價</div>
-                        <div class="stat-value" id="openPrice">-</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">最高價</div>
-                        <div class="stat-value" id="highPrice">-</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">最低價</div>
-                        <div class="stat-value" id="lowPrice">-</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">成交量</div>
-                        <div class="stat-value" id="volume">-</div>
-                    </div>
-                </div>
-
-                <button class="add-to-watchlist" id="addToWatchlistBtn" onclick="addToWatchlist()">
-                    ➕ 加入自選股
-                </button>
-            </div>
-
-            <div class="watchlist">
-                <h3>📋 自選股清單</h3>
-                <div id="watchlistContainer">
-                    <div class="watchlist-empty">還沒有自選股</div>
+                <div style="text-align: right;">
+                    <div class="stock-price" id="resultPrice"></div>
+                    <div class="stock-change" id="resultChange"></div>
                 </div>
             </div>
+            
+            <div class="stock-details">
+                <div class="detail-item">
+                    <div class="detail-label">漲跌</div>
+                    <div class="detail-value" id="resultChangeAmount"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">成交量</div>
+                    <div class="detail-value" id="resultVolume"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button onclick="addToWatchlist()" style="width: 100%;">⭐ 加入自選股</button>
+            </div>
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div class="watchlist">
+            <h2>📌 我的自選股</h2>
+            <div id="watchlistContainer"></div>
         </div>
     </div>
-
+    
     <script>
-        // 股票數據庫 (模擬數據)
-        const stockDatabase = {
-            'AAPL': {
-                name: 'Apple Inc.',
-                currentPrice: 182.45,
-                changePercent: 2.35,
-                change: 4.20,
-                openPrice: 178.25,
-                highPrice: 184.50,
-                lowPrice: 177.80,
-                volume: 52348900,
-                currency: 'USD'
-            },
-            '2330': {
-                name: '台積電 (TSMC)',
-                currentPrice: 598.00,
-                changePercent: 1.68,
-                change: 9.90,
-                openPrice: 588.10,
-                highPrice: 602.50,
-                lowPrice: 586.00,
-                volume: 15234500,
-                currency: 'TWD'
-            },
-            'TSLA': {
-                name: 'Tesla Inc.',
-                currentPrice: 242.84,
-                changePercent: -1.45,
-                change: -3.58,
-                openPrice: 246.42,
-                highPrice: 248.20,
-                lowPrice: 240.50,
-                volume: 125648900,
-                currency: 'USD'
-            },
-            '0050': {
-                name: '元大台灣50 (0050)',
-                currentPrice: 135.80,
-                changePercent: 0.85,
-                change: 1.15,
-                openPrice: 134.65,
-                highPrice: 136.45,
-                lowPrice: 134.20,
-                volume: 8945600,
-                currency: 'TWD'
-            },
-            'GOOGL': {
-                name: 'Alphabet Inc.',
-                currentPrice: 168.52,
-                changePercent: 3.12,
-                change: 5.08,
-                openPrice: 163.44,
-                highPrice: 170.25,
-                lowPrice: 162.95,
-                volume: 28934500,
-                currency: 'USD'
-            },
-            'MSFT': {
-                name: 'Microsoft Corporation',
-                currentPrice: 428.95,
-                changePercent: 1.78,
-                change: 7.56,
-                openPrice: 421.39,
-                highPrice: 432.10,
-                lowPrice: 420.50,
-                volume: 18234900,
-                currency: 'USD'
-            }
-        };
-
-        let currentStock = null;
-        let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
-        let chart = null;
-
-        // 初始化頁面
-        document.addEventListener('DOMContentLoaded', () => {
-            renderWatchlist();
-        });
-
-        // 快速搜尋
-        function searchStockDemo(symbol) {
-            document.getElementById('stockInput').value = symbol;
-            searchStock();
-        }
-
-        // 搜尋股票
-        function searchStock() {
-            const input = document.getElementById('stockInput').value.trim().toUpperCase();
-            
-            if (!input) {
-                showError('請輸入股票代碼');
-                return;
-            }
-
-            showLoading(true);
-            clearError();
-
-            // 模擬延遲
-            setTimeout(() => {
-                const data = stockDatabase[input];
-                
-                if (!data) {
-                    showError('無法找到該股票，請確認代碼是否正確');
-                    showLoading(false);
-                    return;
-                }
-
-                currentStock = {
-                    symbol: input,
-                    ...data
-                };
-
-                displayStockDetail(currentStock);
-                updateWatchlistButton();
-                showLoading(false);
-                showSuccess(`成功載入 ${input} 的股票數據`);
-            }, 800);
-        }
-
-        // 顯示股票詳情
-        function displayStockDetail(stock) {
-            document.getElementById('stockSymbol').textContent = stock.symbol;
-            document.getElementById('stockName').textContent = stock.name;
-            
-            const priceElement = document.getElementById('stockPrice');
-            priceElement.textContent = `$${stock.currentPrice.toFixed(2)}`;
-            
-            const changeElement = document.getElementById('stockChange');
-            const changePercent = stock.changePercent.toFixed(2);
-            const change = stock.change.toFixed(2);
-            
-            changeElement.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}% (${change > 0 ? '+' : ''}${change})`;
-            changeElement.className = `change ${changePercent >= 0 ? 'positive' : 'negative'}`;
-
-            // 更新統計數據
-            document.getElementById('openPrice').textContent = `$${stock.openPrice.toFixed(2)}`;
-            document.getElementById('highPrice').textContent = `$${stock.highPrice.toFixed(2)}`;
-            document.getElementById('lowPrice').textContent = `$${stock.lowPrice.toFixed(2)}`;
-            document.getElementById('volume').textContent = formatNumber(stock.volume);
-
-            // 顯示詳情區域
-            document.getElementById('stockDetail').classList.add('show');
-
-            // 繪製圖表
-            drawChart(stock);
-        }
-
-        // 繪製圖表
-        function drawChart(stock) {
-            const ctx = document.getElementById('priceChart').getContext('2d');
-            
-            // 生成 30 天的模擬數據
-            const dates = [];
-            const prices = [];
-            let basePrice = stock.currentPrice;
-            
-            for (let i = 29; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(date.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }));
-                
-                // 隨機波動
-                const volatility = (Math.random() - 0.5) * 5;
-                basePrice += volatility;
-                prices.push(parseFloat(basePrice.toFixed(2)));
-            }
-
-            if (chart) {
-                chart.destroy();
-            }
-
-            const isPositive = stock.changePercent >= 0;
-
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: `${stock.symbol} 30日價格趨勢`,
-                        data: prices,
-                        borderColor: isPositive ? '#4caf50' : '#f44336',
-                        backgroundColor: isPositive 
-                            ? 'rgba(76, 175, 80, 0.1)' 
-                            : 'rgba(244, 67, 54, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: isPositive ? '#4caf50' : '#f44336',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: '#666',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: {
-                                color: '#f0f0f0'
-                            },
-                            ticks: {
-                                color: '#666',
-                                callback: function(value) {
-                                    return '$' + value.toFixed(0);
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#666',
-                                maxRotation: 45,
-                                minRotation: 0
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // 加入自選股
-        function addToWatchlist() {
-            if (!currentStock) return;
-
-            const exists = watchlist.some(item => item.symbol === currentStock.symbol);
-            
-            if (exists) {
-                showError('這支股票已在自選股中');
-                return;
-            }
-
-            watchlist.push(currentStock);
-            localStorage.setItem('watchlist', JSON.stringify(watchlist));
-            renderWatchlist();
-            updateWatchlistButton();
-            showSuccess(`${currentStock.symbol} 已加入自選股`);
-        }
-
-        // 從自選股移除
-        function removeFromWatchlist(symbol) {
-            watchlist = watchlist.filter(item => item.symbol !== symbol);
-            localStorage.setItem('watchlist', JSON.stringify(watchlist));
-            renderWatchlist();
-            updateWatchlistButton();
-        }
-
-        // 點擊自選股項目
-        function clickWatchlistItem(symbol) {
-            document.getElementById('stockInput').value = symbol;
-            searchStock();
-        }
-
-        // 渲染自選股清單
-        function renderWatchlist() {
+        const API_URL = 'https://my-repository.vercel.app/api/stock';
+        let currentSymbol = '';
+        
+        // Load watchlist from localStorage
+        function loadWatchlist() {
+            const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
             const container = document.getElementById('watchlistContainer');
             
             if (watchlist.length === 0) {
-                container.innerHTML = '<div class="watchlist-empty">還沒有自選股</div>';
+                container.innerHTML = '<p style="color: #999;">還沒有自選股，快加一個吧！</p>';
                 return;
             }
-
-            container.innerHTML = watchlist.map(item => `
-                <div class="watchlist-item" onclick="clickWatchlistItem('${item.symbol}')">
-                    <div class="watchlist-item-info">
-                        <div class="watchlist-item-symbol">${item.symbol}</div>
-                        <div class="watchlist-item-price">$${item.currentPrice.toFixed(2)}</div>
-                    </div>
-                    <div class="watchlist-item-change ${item.changePercent >= 0 ? 'positive' : 'negative'}">
-                        ${item.changePercent >= 0 ? '+' : ''}${item.changePercent.toFixed(2)}%
-                    </div>
-                    <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist('${item.symbol}')">
-                        刪除
-                    </button>
+            
+            container.innerHTML = watchlist.map(symbol => `
+                <div class="watchlist-item">
+                    <span class="watchlist-item-symbol">${symbol}</span>
+                    <button class="remove-btn" onclick="removeFromWatchlist('${symbol}')">移除</button>
                 </div>
             `).join('');
         }
-
-        // 更新加入自選股按鈕狀態
-        function updateWatchlistButton() {
-            const btn = document.getElementById('addToWatchlistBtn');
-            const exists = currentStock && watchlist.some(item => item.symbol === currentStock.symbol);
+        
+        function addToWatchlist() {
+            if (!currentSymbol) return;
             
-            if (exists) {
-                btn.textContent = '✅ 已在自選股';
-                btn.classList.add('added');
+            let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            if (!watchlist.includes(currentSymbol)) {
+                watchlist.push(currentSymbol);
+                localStorage.setItem('watchlist', JSON.stringify(watchlist));
+                loadWatchlist();
+                alert(`已加入自選股：${currentSymbol}`);
             } else {
-                btn.textContent = '➕ 加入自選股';
-                btn.classList.remove('added');
+                alert(`${currentSymbol} 已在自選股中`);
             }
         }
-
-        // 輔助函數
-        function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = '✕ ' + message;
-            errorEl.classList.add('show');
-            setTimeout(() => errorEl.classList.remove('show'), 5000);
+        
+        function removeFromWatchlist(symbol) {
+            let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+            watchlist = watchlist.filter(s => s !== symbol);
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            loadWatchlist();
         }
-
-        function showSuccess(message) {
-            const successEl = document.getElementById('successMessage');
-            successEl.textContent = '✓ ' + message;
-            successEl.classList.add('show');
-            setTimeout(() => successEl.classList.remove('show'), 5000);
+        
+        function quickSearch(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            searchStock();
         }
-
-        function clearError() {
-            document.getElementById('errorMessage').classList.remove('show');
+        
+        async function searchStock() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            
+            if (!symbol) {
+                errorDiv.textContent = '請輸入股票代碼';
+                errorDiv.style.display = 'block';
+                resultDiv.classList.remove('show');
+                return;
+            }
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_URL}?symbol=${symbol}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    errorDiv.textContent = `❌ ${data.error}`;
+                    errorDiv.style.display = 'block';
+                    resultDiv.classList.remove('show');
+                    return;
+                }
+                
+                currentSymbol = data.symbol;
+                
+                // Display results
+                document.getElementById('resultSymbol').textContent = data.symbol;
+                document.getElementById('resultPrice').textContent = `$${data.currentPrice.toFixed(2)}`;
+                
+                const changePercent = data.changePercent;
+                const changeAmount = data.change;
+                const isUp = changePercent >= 0;
+                
+                const changeDiv = document.getElementById('resultChange');
+                changeDiv.className = `stock-change ${isUp ? 'change-up' : 'change-down'}`;
+                changeDiv.textContent = `${isUp ? '📈' : '📉'} ${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
+                
+                document.getElementById('resultChangeAmount').textContent = `${isUp ? '+' : ''}${changeAmount.toFixed(2)}`;
+                document.getElementById('resultVolume').textContent = data.volume.toLocaleString();
+                
+                resultDiv.classList.add('show');
+                
+            } catch (error) {
+                errorDiv.textContent = `❌ 連接失敗：${error.message}`;
+                errorDiv.style.display = 'block';
+                resultDiv.classList.remove('show');
+            }
         }
-
-        function showLoading(show) {
-            document.getElementById('loading').classList.toggle('show', show);
-        }
-
-        function formatNumber(value) {
-            return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
-        }
+        
+        // Allow Enter key to search
+        document.getElementById('symbolInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStock();
+            }
+        });
+        
+        // Load watchlist on page load
+        loadWatchlist();
     </script>
 </body>
 </html>
