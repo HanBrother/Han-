@@ -1,59 +1,64 @@
-from http.server import BaseHTTPRequestHandler
+#!/usr/bin/env python3
 import json
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 import yfinance as yf
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        # CORS headers
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
         
+        # Parse query string
+        query_components = parse_qs(urlparse(self.path).query)
+        symbol = query_components.get('symbol', [''])[0]
+        
+        if not symbol:
+            self.wfile.write(json.dumps({'error': 'No symbol provided'}).encode())
+            return
+        
         try:
-            symbol = self.path.split('symbol=')[1].split('&')[0] if 'symbol=' in self.path else None
-            
-            if not symbol:
-                self.wfile.write(json.dumps({"error": "缺少股票代碼"}).encode())
-                return
-            
+            # Add .TW for Taiwan stocks (numbers only)
             if symbol.isdigit():
-                symbol = f"{symbol}.TW"
+                symbol = symbol + '.TW'
             
+            # Fetch current data
             ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="6mo")
-            info = ticker.info
+            data = ticker.history(period='1d')
             
-            if hist.empty:
-                self.wfile.write(json.dumps({"error": f"找不到 {symbol}"}).encode())
+            if data.empty:
+                self.wfile.write(json.dumps({'error': 'Stock not found'}).encode())
                 return
             
-            last_30 = hist.tail(30)
-            dates = last_30.index.strftime('%m-%d').tolist()
-            prices = last_30['Close'].tolist()
+            # Get current price
+            current_price = float(data['Close'].iloc[-1])
+            
+            # Get previous close for change calculation
+            prev_data = ticker.history(period='5d')
+            if len(prev_data) > 1:
+                prev_close = float(prev_data['Close'].iloc[-2])
+                change = current_price - prev_close
+                change_percent = (change / prev_close) * 100
+            else:
+                change = 0
+                change_percent = 0
+            
+            volume = int(data['Volume'].iloc[-1]) if 'Volume' in data else 0
             
             response = {
-                "symbol": symbol.replace(".TW", ""),
-                "name": info.get("longName", symbol),
-                "currentPrice": float(hist['Close'].iloc[-1]),
-                "previousPrice": float(hist['Close'].iloc[-2]) if len(hist) > 1 else 0,
-                "change": float(hist['Close'].iloc[-1] - hist['Close'].iloc[-2]) if len(hist) > 1 else 0,
-                "changePercent": float((hist['Close'].iloc[-1] - hist['Close'].iloc[-2]) / hist['Close'].iloc[-2] * 100) if len(hist) > 1 else 0,
-                "openPrice": float(hist['Open'].iloc[-1]),
-                "highPrice": float(hist['High'].iloc[-1]),
-                "lowPrice": float(hist['Low'].iloc[-1]),
-                "volume": int(hist['Volume'].iloc[-1]),
-                "dates": dates,
-                "prices": prices
+                'symbol': symbol,
+                'currentPrice': round(current_price, 2),
+                'change': round(change, 2),
+                'changePercent': round(change_percent, 2),
+                'volume': volume
             }
             
             self.wfile.write(json.dumps(response).encode())
             
         except Exception as e:
-            self.wfile.write(json.dumps({"error": str(e)}).encode())
-    
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+            self.wfile.write(json.dumps({'error': str(e)}).encode())
