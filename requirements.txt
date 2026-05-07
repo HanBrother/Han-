@@ -4,5 +4,6 @@ pandas==2.1.4
 numpy==1.26.0
 lxml==4.9.3
 requests==2.31.0
-twstock
+pandas-datareader==0.10.0
+
 
