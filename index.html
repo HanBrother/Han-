@@ -468,7 +468,8 @@
             resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> 查詢中...</div>';
 
             try {
-                const response = await fetch(`${API_URL}?symbol=${encodeURIComponent(symbol)}`);
+               const response = await fetch(`/api?symbol=${symbol}`);
+
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
