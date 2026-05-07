@@ -25,18 +25,17 @@ class handler(BaseHTTPRequestHandler):
                 '0056': '0056.TW',   # 高股息
             }
             
-            # 如果是台灣股票，先試對應的國際代碼
             yahoo_symbol = taiwan_stocks.get(symbol, symbol)
             
             print(f"[DEBUG] User input: {symbol}, Yahoo symbol: {yahoo_symbol}")
             
-            # 下載數據
-            hist = yf.download(yahoo_symbol, period="100d", progress=False, quiet=True)
+            # 移除 quiet=True
+            hist = yf.download(yahoo_symbol, period="100d", progress=False)
             
             if hist.empty:
                 # 試試其他格式
                 for fmt in [f"{symbol}.TW", f"{symbol}.TA", symbol]:
-                    hist = yf.download(fmt, period="100d", progress=False, quiet=True)
+                    hist = yf.download(fmt, period="100d", progress=False)
                     if not hist.empty:
                         yahoo_symbol = fmt
                         break
@@ -74,7 +73,8 @@ class handler(BaseHTTPRequestHandler):
             import traceback
             self.wfile.write(json.dumps({
                 "error": str(e),
-                "type": type(e).__name__
+                "type": type(e).__name__,
+                "traceback": traceback.format_exc()
             }).encode())
     
     def calculate_rsi(self, prices, period=14):
