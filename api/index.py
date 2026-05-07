@@ -15,18 +15,29 @@ class handler(BaseHTTPRequestHandler):
             query_params = parse_qs(urlparse(self.path).query)
             symbol = query_params.get('symbol', ['2330'])[0].upper().strip()
             
-            # 確保有 .TW 後綴（台灣股票）
-            if not symbol.endswith('.TW'):
-                symbol = f"{symbol}.TW"
+            # 試多種格式
+            formats = [
+                symbol,           # 直接用
+                f"{symbol}.TW",   # 加 .TW
+                f"{symbol}.TA",   # 加 .TA
+                f"0{symbol}.TW" if len(symbol) == 4 else symbol  # 4碼加 0
+            ]
             
-            print(f"Fetching: {symbol}")  # Debug 用
+            hist = None
+            used_symbol = None
             
-            # 下載數據
-            hist = yf.download(symbol, period="100d", progress=False)
+            for fmt in formats:
+                try:
+                    hist = yf.download(fmt, period="100d", progress=False)
+                    if not hist.empty:
+                        used_symbol = fmt
+                        break
+                except:
+                    continue
             
-            if hist.empty:
+            if hist is None or hist.empty:
                 self.wfile.write(json.dumps({
-                    "error": f"Stock {symbol} not found",
+                    "error": f"Stock {symbol} not found. Try: 2330, AAPL, MSFT",
                     "symbol_requested": symbol
                 }).encode())
                 return
@@ -38,8 +49,8 @@ class handler(BaseHTTPRequestHandler):
             rsi = self.calculate_rsi(close_prices)
             
             response = {
-                "symbol": symbol,
-                "price": float(close_prices.iloc[-1]),
+                "symbol": used_symbol,
+                "price": round(float(close_prices.iloc[-1]), 2),
                 "ma5": round(ma5, 2),
                 "ma20": round(ma20, 2),
                 "rsi": round(rsi, 2),
